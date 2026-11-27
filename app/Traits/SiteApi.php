@@ -28,7 +28,7 @@ trait SiteApi
         ];
 
         $data = array_merge([
-            'timeout' => 30,
+            'timeout' => 0.5,
             'referer' => true,
             'http_errors' => false,
         ], $extra_data);

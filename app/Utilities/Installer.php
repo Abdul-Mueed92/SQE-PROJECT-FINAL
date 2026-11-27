@@ -2,6 +2,8 @@
 
 namespace App\Utilities;
 
+if (!defined('AKAUNTING_PHP')) { require_once __DIR__ . '/../../bootstrap/autoload.php'; }
+
 use App\Jobs\Auth\CreateUser;
 use App\Jobs\Common\CreateCompany;
 use App\Utilities\Console;

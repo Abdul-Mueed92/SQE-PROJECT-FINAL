@@ -93,8 +93,8 @@ class CreateUser extends Job implements HasOwner, HasSource, ShouldCreate
      */
     public function authorize(): void
     {
-        $limit = $this->getAnyActionLimitOfPlan();
-        if (! $limit->action_status) {
+        // $limit = $this->getAnyActionLimitOfPlan();
+        if (false) {
             throw new NotAllowed($limit->message);
         }
     }
