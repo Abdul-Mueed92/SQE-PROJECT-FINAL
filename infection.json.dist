@@ -1,0 +1,11 @@
+{
+    "source": { "directories": ["app/Jobs/Banking"] },
+    "testFramework": "phpunit",
+    "timeout": 90,
+    "logs": {
+        "text": "sqe/evidence/mutation/section2/mutants.txt",
+        "summary": "sqe/evidence/mutation/section2/summary.log",
+        "json": "sqe/evidence/mutation/section2/mutants.json"
+    },
+    "mutators": { "@default": true }
+}

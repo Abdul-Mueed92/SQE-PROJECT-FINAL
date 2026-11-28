@@ -14,7 +14,7 @@
                 </span>
             </div> -->
 
-            <money :name="name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
+            <money :id="name" :name="name" :aria-label="title || name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
         </div>
 
         <div class="text-red text-sm mt-1 block" v-if="error" v-html="error"></div>
@@ -34,10 +34,10 @@
                 </span>
             </div>
 
-            <money :name="name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
+        <money :id="name" :name="name" :aria-label="title || name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
         </div>
 
-        <money v-else :name="name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
+        <money v-else :id="name" :name="name" :aria-label="title || name" @input="input" :placeholder="placeholder" v-bind="money" :value="model" :disabled="disabled" :masked="masked" class="input-money" :class="moneyClass"></money>
 
         <div class="text-red text-sm mt-1 block" v-if="error" v-html="error"></div>
     </div>

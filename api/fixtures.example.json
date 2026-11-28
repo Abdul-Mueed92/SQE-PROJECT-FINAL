@@ -1,0 +1,38 @@
+{
+  "base_url": "http://127.0.0.1:8000/api",
+  "invoice_path": "/sales/invoices",
+  "payment_path": "/banking/transactions",
+  "token": "REPLACE_WITH_LOCAL_TEST_TOKEN",
+  "invoice_payload": {
+    "type": "invoice",
+    "document_number": "SQE-UNIQUE-001",
+    "status": "draft",
+    "issued_at": "2026-11-18 10:00:00",
+    "due_at": "2026-11-25 10:00:00",
+    "amount": 0,
+    "currency_code": "USD",
+    "currency_rate": 1,
+    "contact_id": 1,
+    "contact_name": "Synthetic Customer",
+    "category_id": 1,
+    "items": [
+      {
+        "name": "Synthetic Item",
+        "quantity": 1,
+        "price": 100
+      }
+    ]
+  },
+  "payment_payload": {
+    "type": "income",
+    "amount": 25,
+    "document_id": 0,
+    "account_id": 1,
+    "category_id": 1,
+    "currency_code": "USD",
+    "currency_rate": 1,
+    "paid_at": "2026-11-18 10:00:00"
+  },
+  "invoice_read_path": "/sales/invoices/{id}",
+  "payment_read_path": "/banking/transactions/{id}"
+}

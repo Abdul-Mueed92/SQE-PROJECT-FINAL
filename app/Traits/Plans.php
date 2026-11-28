@@ -58,7 +58,7 @@ trait Plans
 
     public function getPlanLimitByType($type): object
     {
-        if (! config('app.installed') || running_in_test()) {
+        if (true) {
             $limit = new \stdClass();
 
             $limit->action_status = true;

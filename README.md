@@ -1,69 +1,51 @@
-﻿# Akaunting™
+# Akaunting software quality engineering project
 
-[![Release](https://img.shields.io/github/v/release/akaunting/akaunting?label=release)](https://github.com/akaunting/akaunting/releases)
-![Downloads](https://img.shields.io/github/downloads/akaunting/akaunting/total?label=downloads)
-[![Tests](https://img.shields.io/github/actions/workflow/status/akaunting/akaunting/tests.yml?label=tests)](https://github.com/akaunting/akaunting/actions)
+The two workflows are invoice creation and payment recording. The tested Akaunting baseline is `085068f021d3e5e79f83a6f901ad948e6a4c8b6e`. The [upstream repository](https://github.com/akaunting/akaunting) uses the Business Source License 1.1 for this version. See [the report](sqe/report.html) for scope, assignment eligibility, results and open work.
 
-Online accounting software designed for small businesses and freelancers. Akaunting is built with modern technologies such as Laravel, VueJS, Tailwind, RESTful API etc. Thanks to its modular structure, Akaunting provides an awesome App Store for users and developers.
+## Local setup and reset
 
-* [Home](https://akaunting.com) - The house of Akaunting
-* [Forum](https://akaunting.com/forum) - Ask for support
-* [Documentation](https://akaunting.com/hc/docs) - Learn how to use
-* [Developer Portal](https://developer.akaunting.com) - Generate passive income
-* [App Store](https://akaunting.com/apps) - Extend your Akaunting
+Use PHP 8.2 with the extensions declared in `composer.json`, Composer, Node.js, Python 3.12, SQLite and Xdebug for branch coverage. Windows PowerShell commands from the repository root:
 
-## Requirements
-
-* PHP 8.2 or higher
-* Node.js 20, 22 or 24 (to build the assets)
-* Database (e.g.: MariaDB, MySQL, PostgreSQL, SQLite)
-* Web Server (eg: Apache, Nginx, IIS)
-* [Other libraries](https://akaunting.com/hc/docs/on-premise/requirements/)
-
-## Framework
-
-Akaunting uses [Laravel](http://laravel.com), the best existing PHP framework, as the foundation framework and [Module](https://github.com/akaunting/module) package for Apps.
-
-## Installation
-
-* Clone the repository: `git clone https://github.com/akaunting/akaunting.git`
-* Install dependencies: `composer install ; npm install ; npm run dev`
-* Install Akaunting:
-
-```bash
-php artisan install --db-name="akaunting" --db-username="root" --db-password="pass" --admin-email="admin@company.com" --admin-password="123456"
+```powershell
+Copy-Item .env.testing .env -ErrorAction Stop  # Fresh checkout only
+composer install --no-interaction --prefer-dist
+npm.cmd ci
+npm.cmd run production
+python -m pip install PyYAML==6.0.3
+npm.cmd ci --prefix sqe/browser
+node sqe/browser/node_modules/@playwright/test/cli.js install chromium
 ```
 
-* Create sample data (optional): `php artisan sample-data:seed`
+For browser and load checks, start the loopback server from a separate shell. Each launch creates a fresh SQLite database in the OS temporary directory and runs the app migrations plus `Database\Seeds\TestCompany`. Restart it to reset the data. The synthetic staff and customer use `test@company.com` and `customer@company.com`, both with `123456`.
 
-Point the web server's document root at the project root, not at `public`.
-Akaunting serves itself through the `index.php` in the project root and builds
-its asset URLs accordingly.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\sqe\start-test-server.ps1
+```
 
-> If you prefer, `php artisan serve` also works for a quick local run.
+On Linux use `bash sqe/start-test-server.sh`. Do not use these synthetic accounts on a deployed instance.
 
-## Contributing
+## Run checks
 
-Please, be very clear on your commit messages and Pull Requests, empty Pull Request messages may be rejected without reason.
+```powershell
+php vendor/bin/phpunit --testsuite Unit
+php vendor/bin/phpunit tests/Feature/Team/InvoicePaymentApiTest.php
+python api/run_api_tests.py
+python api/verify_regeneration.py
+node sqe/browser/node_modules/@playwright/test/cli.js test --config sqe/browser/playwright.config.cjs
+node sqe/browser/check-roles.mjs
+node sqe/browser/audit-accessibility.mjs before
+```
 
-When contributing code to Akaunting, you must follow the PSR coding standards. The golden rule is: Imitate the existing Akaunting code.
+The PHPUnit configuration resets the data with in-memory SQLite. `api/run_api_tests.py` generates cases from `api/openapi-sqe.yaml`, runs them through Laravel's HTTP kernel, and saves the original cases, per-case outcomes and JUnit XML. The older sample fixture JSON files are retained as historical examples only.
 
-Please note that this project is released with a [Contributor Code of Conduct](https://akaunting.com/conduct). *By participating in this project you agree to abide by its terms*.
+The [CI workflow](.github/workflows/sqe-quality.yml) shows the coverage, mutation and Sonar commands. Sonar requires an instance and configured `SONAR_HOST_URL` and `SONAR_TOKEN` secrets. The focused payment gate applies to `checkAmount()` in `CreateBankingDocumentTransaction.php`.
 
-## Changelog
+For k6 use a separate synthetic server to measure operation latency without the ordinary rate limit dominating the run:
 
-Please see [Releases](../../releases) for more information about what has changed recently.
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\sqe\start-test-server.ps1 -Port 8766 -ApiRequestsPerMinute 2000
+# In another shell, supply the path to the official k6 executable.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\sqe\run-performance.ps1 -K6 'C:\tools\k6.exe' -Port 8766
+```
 
-## Security
-
-Please review [our security policy](https://github.com/akaunting/akaunting/security/policy) on how to report security vulnerabilities.
-
-## Credits
-
-* [Denis Duliçi](https://github.com/denisdulici)
-* [Cüneyt Şentürk](https://github.com/cuneytsenturk)
-* [All Contributors](../../contributors)
-
-## License
-
-Akaunting is released under the [BSL license](LICENSE.txt).
+Find raw reports under [`sqe/evidence`](sqe/evidence/) and the earlier focused Xdebug and JUnit reports at the repository root. The report is explicit about whether evidence came from a fresh execution, a saved prior run, or work that remains open.

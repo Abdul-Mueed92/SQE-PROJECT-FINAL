@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Akaunting software quality engineering project</title>
+  <style>
+    @page { size: A4; margin: 14mm 16mm; }
+    body { max-width: 190mm; margin: 0 auto; color: #181818; font: 10pt/1.45 Arial, sans-serif; }
+    h1 { color: #163b55; font-size: 25pt; margin-bottom: 4pt; }
+    h2 { color: #163b55; font-size: 15pt; margin-top: 22pt; border-bottom: 1px solid #bccad4; }
+    h3 { font-size: 11pt; margin-bottom: 2pt; }
+    h2, h3 { break-after: avoid; }
+    p { margin: 5pt 0; }
+    table { width: 100%; border-collapse: collapse; margin: 7pt 0; font-size: 9pt; }
+    thead { display: table-header-group; }
+    tr { break-inside: avoid; }
+    th, td { border: 1px solid #b9c6cf; padding: 4pt; text-align: left; vertical-align: top; }
+    th { background: #e8eff4; }
+    code, a { overflow-wrap: anywhere; }
+    a { color: #16446e; }
+  </style>
+</head>
+<body>
+<h1>Akaunting quality assessment</h1>
+<p>SE3002 Software Quality Engineering · Fall 2026 · Evidence cut-off 28 November 2026</p>
+<p><strong>Team:</strong> Abdul-Mueed (24I-3084) and Faizan Ahmad (24I-3145), group of two. The instructor confirmed that Akaunting's BSL 1.1 license is acceptable for this assignment. Section, registration evidence, area ownership and actual hours still need to be entered by the team. The repository link below is the upstream baseline.</p>
+
+<h2>System and scope</h2>
+<p>Akaunting is a Laravel web accounting MIS with a browser interface, JSON API and persistent storage. The baseline is <code>085068f021d3e5e79f83a6f901ad948e6a4c8b6e</code>. It uses Business Source License 1.1 with a change license of GPLv3 four years after publication. The team reports that the instructor accepted this license for the assignment on 28 November 2026. <a href="https://github.com/akaunting/akaunting/blob/085068f021d3e5e79f83a6f901ad948e6a4c8b6e/LICENSE.txt">Pinned upstream license</a></p>
+<table><thead><tr><th>Workflow</th><th>Starting condition and action</th><th>Expected outcome and shared data</th></tr></thead><tbody>
+<tr><td>Invoice creation</td><td>A staff user can access sales and a synthetic customer and item exist. Submit the invoice with a contact, line and ordered dates.</td><td>One invoice is stored. The server derives the total from its lines. Payment reads the invoice ID, currency, status and remaining balance.</td></tr>
+<tr><td>Payment recording</td><td>A staff user opens a sent invoice with an outstanding balance and submits a payment in a configured currency.</td><td>One transaction links to the invoice. A partial or full payment updates invoice status and reduces the balance. Rejection preserves both records.</td></tr>
+</tbody></table>
+<p>Roles are the seeded admin and customer. The admin manages invoices and banking transactions. The customer uses the portal to view permitted records. The route and middleware source provide the permission basis. The workflow scope uses ordinary one-time invoices and records recurring validator checks separately as supplementary evidence.</p>
+
+<h3>Requirements and traceability</h3>
+<table><thead><tr><th>ID</th><th>Expected behavior</th><th>Evidence</th></tr></thead><tbody>
+<tr><td>INV-01</td><td>Accept a valid new invoice and return a readable ID.</td><td>Invoice and payment API workflow, generated invoice samples</td></tr>
+<tr><td>INV-02</td><td>Reject a due date earlier than the issue date.</td><td>Generated date triples, request validation</td></tr>
+<tr><td>INV-03</td><td>Derive invoice amount from invoice lines.</td><td>100 USD invoice built from one line and checked by the shared balance assertion</td></tr>
+<tr><td>INV-04</td><td>Reject repeated invoice numbers within the same type and company.</td><td>Repeated create and record count</td></tr>
+<tr><td>PAY-01</td><td>Persist one valid linked payment and expose it on readback.</td><td>Invoice and transaction readback, persisted relationship</td></tr>
+<tr><td>PAY-02</td><td>Reject a monetary amount above the remaining balance.</td><td>Payment limit BVA, API regression before and after</td></tr>
+<tr><td>PAY-03</td><td>Set partial or paid according to the remaining balance.</td><td>Unit decision and API payment transition checks</td></tr>
+<tr><td>PAY-04</td><td>A repeated payment number cannot create a duplicate.</td><td>Retry, duplicate rejection and postcondition checks</td></tr>
+</tbody></table>
+<p>Scope basis includes <code>Document::rules()</code>, <code>Transaction::rules()</code>, <code>Document::isOutstanding()</code>, <code>Document::getAmountDueAttribute()</code>, and <code>CreateBankingDocumentTransaction::checkAmount()</code>. The four business rules are BR-1 ordered invoice dates, BR-2 outstanding iff accrued and unpaid, BR-3 balance cap after conversion and rounding, and BR-4 partial or paid transition. Playwright verified that staff cannot start payments from the cancelled-invoice detail screen.</p>
+
+<h3>Browser use cases</h3>
+<table><thead><tr><th>Use case and precondition</th><th>Main flow and postcondition</th><th>Alternative flows</th><th>Exception flows</th></tr></thead><tbody>
+<tr><td>UC-1 Create an invoice draft. Staff session, customer and enabled item exist.</td><td>Select customer and item, enter a unique invoice number, save. A single draft appears with the amount derived from its lines.</td><td>Use more than one line. Add an optional note.</td><td>Customer not selected. Existing number in the same company and type. The invalid attempt creates no record.</td></tr>
+<tr><td>UC-2 Revise an invoice draft before issue. A draft is stored.</td><td>Open draft, change quantity and save. The original invoice ID has the revised total.</td><td>Edit the due date. Change the item.</td><td>Reversed dates. Number already in use. The persisted draft retains its earlier values.</td></tr>
+<tr><td>UC-3 Record a payment. A staff user opens a sent invoice with a balance.</td><td>Open Add Payment, enter the remaining amount and save. The invoice becomes paid with one linked transaction.</td><td>Make a partial payment. Pay the remainder in a second transaction.</td><td>Amount exceeds balance. Invoice already settled. Rejected action leaves balance and transaction list unchanged.</td></tr>
+<tr><td>UC-4 Recover or abandon a rejected payment. Payment form is open.</td><td>Enter an excessive amount, verify the message, correct it and save. Exactly one accepted transaction exists.</td><td>Navigate to Save by keyboard. Close and reopen the payment form before recording.</td><td>Missing required account selection. Invoice cancellation before a new payment. No transaction is written for the invalid action.</td></tr>
+</tbody></table>
+<p>Seven supplemental cases passed on a fresh fixture. They verified a two-line draft with a saved note, duplicate-number and missing-customer rejection, editing draft quantity with readback, dismissing and reopening the payment form, and the unavailable payment action on paid and cancelled invoices. <a href="evidence/section2/browser-rerun/junit.xml">Browser JUnit</a> · <a href="evidence/section2/browser-rerun/html/index.html">Playwright report</a></p>
+<p>Further browser runs verified replacing a draft line, editing the due date within the calendar's valid range, blocking selection before the issue date, and recording a 40 USD partial payment followed by the 60 USD remainder. The draft-update HTTP regression verified duplicate-number rejection at 422 with the original number preserved. <a href="evidence/section2/browser-followup/junit.xml">Draft-edit JUnit</a> · <a href="evidence/section2/browser-extra/junit.xml">Partial and remainder JUnit</a> · <a href="evidence/section2/draft-duplicate-regression.xml">Draft duplicate HTTP regression</a></p>
+<p>The final browser reruns confirmed the original draft and competing invoice number remained unchanged and that clearing the payment account produced a required-field error without a transaction or status change. All four listed use cases have observed main, alternative and exception paths across the recorded runs. Per-member attribution requires team records. <a href="evidence/section2/browser-final-rejections/junit.xml">Draft number readback</a> · <a href="evidence/section2/browser-payment-account/junit.xml">Missing payment account</a> · <a href="evidence/browser/workflow-final/junit.xml">Main invoice flow</a> · <a href="evidence/browser/payment-cents/junit.xml">Main payment and recovery flow</a></p>
+
+<h2>White-box testing</h2>
+<ul>
+<li>Consolidated Unit run before the payment-limit addition. 198 tests, 427 assertions, zero failures. <a href="../unit-consolidated-results.xml">JUnit</a></li>
+<li>Invoice and payment validation. 61 tests, 178 assertions, 140/140 executable lines and 74/74 branches. <a href="../coverage-requests-focused/index.html">Coverage</a> · <a href="../unit-request-coverage-results.xml">JUnit</a></li>
+<li>Payment cap. Six cases, 16 assertions. <code>checkAmount()</code> reached 29/29 lines and 10/10 branches in the focused run prior to the exception-type fix. The whole payment job used 31/58 lines and 11/43 branches. The remaining paths include request defaults and persistence orchestration. <a href="../coverage-payment-limit-focused/CreateBankingDocumentTransaction.php.html#74">Coverage</a> · <a href="../unit-payment-limit-results.xml">JUnit</a></li>
+<li>Five invoice model methods reached full line and branch coverage. The entire shared document model measured 31/328 lines and 29/202 branches in that focused run. <a href="../coverage-invoice-focused/Document.php.html">Coverage</a></li>
+<li>Twelve additional unit cases passed with 26 assertions. They exercised the issue-date boundary, all feasible invoice plan-authorization rows, payment defaults, preservation of explicit values, status persistence, history dispatch and payment events. <a href="evidence/section2/new-unit-verified.xml">JUnit</a></li>
+<li>The latest full payment-job run passed 12 tests and 42 assertions and measured 58/58 executable lines and 43/43 branches. The tests check the payment request handed to the transaction job and the description and notification flag handed to the history job. <a href="evidence/section2/payment-job-coverage.xml">JUnit</a> · <a href="evidence/section2/payment-job-coverage/Jobs/Banking/CreateBankingDocumentTransaction.php.html">Whole-job Xdebug coverage</a></li>
+<li>The complete Section 2 focused unit suite passed 122 tests and 304 assertions with zero errors or failures. The saved run includes line, branch and path coverage for invoice creation, payment, validation and document decisions. <a href="evidence/section2/line-coverage-junit.xml">Full focused JUnit</a> · <a href="evidence/section2/line-coverage.xml">Clover coverage</a></li>
+</ul>
+<h3>MCC and MC/DC for the outstanding decision</h3>
+<table><thead><tr><th>Accrued</th><th>Status is unpaid</th><th>Outstanding</th><th>Representative test input</th></tr></thead><tbody>
+<tr><td>False</td><td>False</td><td>Infeasible</td><td>Paid status is accrued by definition.</td></tr>
+<tr><td>False</td><td>True</td><td>False</td><td>Draft</td></tr>
+<tr><td>True</td><td>False</td><td>False</td><td>Paid</td></tr>
+<tr><td>True</td><td>True</td><td>True</td><td>Sent</td></tr>
+</tbody></table>
+<p>Draft ↔ sent isolates the accrued condition. Paid ↔ sent isolates the unpaid condition. Currency match and the comparison with the payment balance are exercised in all six reachable combinations in the payment-limit unit tests. BR-1 is traced to the request rule selection and the generated ordered date tests. <a href="../unit-mcc-mcdc-results.xml">Decision JUnit evidence</a></p>
+<p>The invoice plan guard rejects when the plan blocks actions, the document type is present and it equals invoice. The six feasible cases cross allowed and blocked with absent type, bill, and invoice. Only blocked plus invoice rejects. Allowed invoice ↔ blocked invoice isolates the plan condition. Blocked bill ↔ blocked invoice isolates the invoice condition. A missing type cannot equal invoice, so the type-presence condition has no feasible independent-effect pair. <a href="evidence/section2/new-unit-verified.xml">Authorization decisions</a></p>
+<h3>Control-flow complexity</h3>
+<p>The <code>checkAmount()</code> CFG evaluates currency difference, then amount above balance, then currency difference on the rejection path or equality on the accepted path. Its basic blocks are initial rounding and test, conversion, balance and cap test, rejection currency test, error conversion, throw, equality test, paid assignment, partial assignment and a common exit. With 13 edges and 10 nodes, McCabe complexity is 13 − 10 + 2 = 5. The local PHP parser independently found the same four decisions. The recurring currency predicate is correlated with the first one. Xdebug recorded six of eight syntactic paths. SonarQube reported 20 for the whole PHP file. The source-level sum is 5 for <code>checkAmount()</code>, 11 for <code>prepareRequest()</code>, and one each for the constructor, <code>handle()</code>, its transaction closure and <code>createHistory()</code>. <a href="evidence/static/payment-complexity-ast.json">Method AST count</a> · <a href="evidence/static/sonar-payment-file.json">SonarQube file metrics</a></p>
+<h3>SonarQube static analysis</h3>
+<table><thead><tr><th>Measure</th><th>Result</th><th>Measure</th><th>Result</th></tr></thead><tbody>
+<tr><td>Non-comment lines</td><td>63,779</td><td>Cyclomatic complexity</td><td>10,130</td></tr>
+<tr><td>Cognitive complexity</td><td>7,445</td><td>Duplicated line density</td><td>12.5%</td></tr>
+<tr><td>Bugs</td><td>25</td><td>Vulnerabilities</td><td>22</td></tr>
+<tr><td>Code smells</td><td>0</td><td>Technical debt</td><td>0 minutes</td></tr>
+<tr><td>Imported project coverage</td><td>0.2%</td><td>Ratings</td><td>Reliability C, security D, maintainability A</td></tr>
+</tbody></table>
+<p>SonarQube Community Build 26.11 analyzed <code>app</code>, <code>config</code>, and <code>routes</code> using the Sonar way core PHP profile and the focused payment-guard Clover report. The project-wide denominator explains the low imported coverage. Zero code smells and debt are tool results under that profile. The scanner timed out waiting for the first quality gate response, and the server later recorded the analysis task as successful. The server returned an OK gate with an empty condition list for this analysis. <a href="evidence/static/sonar-task.json">Server task</a> · <a href="evidence/static/sonar-measures.json">Project measures</a> · <a href="evidence/static/sonar-quality-gate.json">Gate result</a> · <a href="evidence/static/sonar-scanner.log">Scanner log</a></p>
+
+<h3>Mutation analysis</h3>
+<p>Initial Infection 0.29.14 results for the payment job were 61 generated, 10 killed by tests, eight execution errors, six covered survivors and 37 uncovered. Infection calculated 29% overall MSI and 75% covered-code MSI. The eight execution errors are reported separately because they do not establish successful business-rule assertions. Both custom operators were detected by the test suite. One rejects an exactly settled balance and the other ignores previous payments. <a href="evidence/mutation/before/mutants.txt">Infection findings</a> · <a href="evidence/mutation/custom/summary.json">Custom operators</a></p>
+<p>The intermediate guard-only rerun killed 15 of 24 mutants, with eight execution errors and one survivor. The final whole-job run disabled PHPUnit's shared result cache to eliminate Windows write collisions. Infection then generated 61 mutants. Tests killed 57, four survived, and there were zero errors or uncovered mutants. Both overall and covered MSI were 93.44%, above the 75% gate. The survivors are the rounded-value comparison, private history-method visibility, and removal of two history-formatting casts. The class has no production subclass overriding that method. The money helper accepts the observed typed transaction fields with either cast behavior, and the comparison agrees in the tested fixed-precision currency domain. <a href="evidence/mutation/section2/summary.log">Final summary</a> · <a href="evidence/mutation/section2/mutants.json">Mutant IDs, diffs and outcomes</a></p>
+<table><thead><tr><th>Initial mutation</th><th>Analysis and response</th></tr></thead><tbody>
+<tr><td>1 · Omit paid amount event</td><td>Covered survivor. Credit adjustment now exercises the event's effect on remaining balance.</td></tr>
+<tr><td>2 · Floor calculated balance</td><td>Covered survivor. An invoice with a fractional outstanding balance detects the incorrect limit.</td></tr>
+<tr><td>3 · Ceil calculated balance</td><td>Covered survivor. The same exact fractional test detects the opposite rounding change.</td></tr>
+<tr><td>4 · Replace bccomp with ordinary comparison</td><td>Covered survivor. Equivalent within the tested finite fixed-precision currency amounts. Inputs outside that domain are unassessed.</td></tr>
+<tr><td>5 · Floor displayed foreign balance</td><td>Covered survivor. A foreign currency rejection checks the fractional amount in the error.</td></tr>
+<tr><td>6 · Ceil displayed foreign balance</td><td>Covered survivor. The same rejection distinguishes rounding upward.</td></tr>
+<tr><td>7 · Change job handle visibility</td><td>Initially uncovered. The final job test calls the public entry point and kills the mutation.</td></tr>
+<tr><td>8 · Remove creation-start event</td><td>Initially uncovered. The test now requires one start event.</td></tr>
+<tr><td>9 · Skip request preparation</td><td>Initially uncovered. The final transaction-job argument check requires the invoice and company defaults.</td></tr>
+<tr><td>10 · Skip amount guard</td><td>Initially uncovered. The successful job test requires the guard to set the paid status before save.</td></tr>
+<tr><td>11 · Remove transaction block</td><td>Initially uncovered. The job test now requires a transaction and verifies the resulting dispatches.</td></tr>
+<tr><td>12 · Skip invoice save</td><td>Initially uncovered. The job test requires one save with the paid status.</td></tr>
+<tr><td>13 · Omit payment history creation</td><td>Initially uncovered. The final test requires the history command, exact description and notification flag.</td></tr>
+<tr><td>14 · Omit creation-complete event</td><td>Initially uncovered. The test now requires one completion event.</td></tr>
+<tr><td>15 · Make request preparation private</td><td>Initially uncovered. The focused decision tests exercise the protected method through a subclass.</td></tr>
+</tbody></table>
+<p>The configured quality workflow runs PHP and browser tests, the 100% payment-job line and branch gate, both custom mutation checks, a 75% Infection covered MSI gate and the Sonar gate. Actions are enabled on the public SQE repository, but the authenticated live check on 28 November found zero registered workflows and zero runs. PRs 4 and 5 have zero check runs. The workflows exist only in this local checkout, whose origin points to upstream Akaunting. The unauthenticated branch-protection request returned HTTP 401, so protection is not verified. Add the workflow to the PR base branch, run it on both PRs, then require the successful check in branch protection. <a href="../.github/workflows/sqe-quality.yml">Quality workflow</a> · <a href="https://github.com/Abdul-Mueed92/SQE-PROJECT-FINAL/pull/4">Before-fix PR</a> · <a href="https://github.com/Abdul-Mueed92/SQE-PROJECT-FINAL/pull/5">Fix PR</a> · <a href="evidence/section2/github-actions-public.json">Public repository snapshot</a> · <a href="evidence/section2/github-branch-protection.json">Branch protection status</a></p>
+<p>The local coverage gate rejected the earlier guard-only coverage and accepted the full-job rerun. The configured check therefore distinguishes the two local coverage inputs. <a href="evidence/section2/local-coverage-gate-comparison.json">Gate execution outcomes</a></p>
+
+<h2>API and recovery</h2>
+<p>The workflows use invoice creation and per-invoice transactions over Laravel's HTTP kernel and an SQLite test database. The live server uses a separate persistent SQLite fixture. The linked invoice and payment test checks duplicates, readback, the two accepted payment transitions and rejection after settlement.</p>
+<p>The recovery test injects an exception during <code>TransactionCreating</code> before the write. It verifies that the invoice stays sent with a balance of 100 and zero transactions. After the dependency is restored, retry settles the invoice with one transaction. A repeated retry is rejected and the transaction count remains one. The latest run passed five PHPUnit entries with 804 assertions across four workflow and regression tests and the generated-case runner. The creation test provides 10 as the caller amount and reads back the 100 calculated from the invoice line. The malformed-date regression checks HTTP 422 on three date fields and verifies the unchanged records. <a href="evidence/section2/api-workflow-verified.xml">API and recovery JUnit</a> · <a href="evidence/section2/malformed-date-before.xml">Malformed date before the fix</a></p>
+<p id="generated-results">All 99 generated JSON cases matched expected outcomes, with 694 assertions. The rerun uses HTTP 422 and field-level errors for malformed dates. It disables only throttle middleware in the test process so independent input partitions do not interfere with one another. Multipart attachment and conditional recurring inputs still need API cases. Changing invoice item name length from 255 to 40 and the fixture payment cap from 100 to 80 regenerated six boundary values. <a href="evidence/section2/generated-api/generated-results.json">Per-case results</a> · <a href="evidence/api/regeneration.json">Two-constraint regeneration</a></p>
+
+<h2>Performance</h2>
+<p>On 28 November, k6 2.4.0 measured reads of one synthetic invoice on PHP 8.2.12, SQLite and the Windows loopback server. Each run warmed up for 15 seconds and measured 65 seconds. The test fixture used a 3,000 requests/minute API limit so ordinary throttling would not set throughput. The PHP built-in server has one worker; the workstation had 4 logical processors and 7.9 GiB RAM. The two runs at each load used the same build and freshly seeded synthetic data. Limits were p95 at most 350 ms for one user and 1,200 ms for five users, with fewer than 1% unexpected failures. The 350 ms one-user target is the interactive read budget; the 1,200 ms five-user target allows for concurrency while keeping a response usable. The failure cap protects reliable readback. These are project acceptance targets, not claims about an industry standard.</p>
+<table><thead><tr><th>VUs / repeat</th><th>p95 ms</th><th>Completed requests/s</th><th>Unexpected failures</th><th>Result</th></tr></thead><tbody>
+<tr><td>1 / 1</td><td>577.35</td><td>1.831</td><td>0%</td><td>Fail: p95</td></tr>
+<tr><td>1 / 2</td><td>649.40</td><td>1.785</td><td>0%</td><td>Fail: p95</td></tr>
+<tr><td>5 / 1</td><td>2436.13</td><td>2.646</td><td>0.58%</td><td>Fail: p95</td></tr>
+<tr><td>5 / 2</td><td>1742.29</td><td>2.985</td><td>0%</td><td>Fail: p95</td></tr>
+</tbody></table>
+<p>All four runs met the failure-rate limit and missed the response-time limit. Finding PERF-01 is major in this environment and linked to R8. The single-worker PHP server and workstation resource limits may affect these measurements; this run cannot separate their effect from application performance. Treat the result as a local test-environment failure and repeat on a representative multi-worker deployment before making a production capacity claim. k6 returned exit code 99 for each run because the p95 threshold failed. <a href="evidence/performance/">Raw k6 outputs</a> ? <a href="evidence/performance/environment.json">Run environment and limits</a></p>
+
+<h2>Test management</h2>
+<p>Entry criteria are a pinned baseline, a resettable synthetic fixture, runnable source and agreed expected workflow outcomes. Suspend on fixture or execution errors that invalidate evidence. Resume after a clean fixture or relevant tool fix and repeat the affected checks. Execute high-risk financial and identity checks before UI and load measurements. Preserve failed runs and record rechecks separately.</p>
+<table><thead><tr><th>Area</th><th>Optimistic / likely / pessimistic effort, person-hours</th><th>PERT estimate</th><th>Actual</th></tr></thead><tbody>
+<tr><td>Static analysis, white-box, mutation and CI</td><td>6 / 10 / 16</td><td>10.3 h</td><td>Team timesheet unavailable</td></tr>
+<tr><td>API and contract generation</td><td>4 / 7 / 12</td><td>7.3 h</td><td>Team timesheet unavailable</td></tr>
+<tr><td>Browser, accessibility, security, load and recovery</td><td>8 / 14 / 22</td><td>14.3 h</td><td>Team timesheet unavailable</td></tr>
+<tr><td>Test management, report and viva preparation</td><td>4 / 7 / 11</td><td>7.2 h</td><td>Team timesheet unavailable</td></tr>
+</tbody></table>
+<p>These are planning estimates for the remaining academic deliverables. Formula is (optimistic + 4 × likely + pessimistic) / 6. Recorded Section 2 execution times include 1m 30s for the payment-job unit run, 4m 43s for Infection and 10m 27s for SonarQube server processing. Team person-hours require the original activity records.</p>
+
+<h3>Risk register</h3>
+<table><thead><tr><th>ID</th><th>Risk and resulting impact</th><th>L × I</th><th>Technique and scope</th></tr></thead><tbody>
+<tr><td>R1</td><td>Overpayment corrupts balance.</td><td>4 × 5 = 20</td><td>Currency-aware BVA, state readback and retry</td></tr>
+<tr><td>R2</td><td>Unauthorized staff action or customer exposure.</td><td>4 × 5 = 20</td><td>Role decision matrix and passive review</td></tr>
+<tr><td>R3</td><td>Repeated requests duplicate accounting records.</td><td>3 × 5 = 15</td><td>Replay and readback on both workflows</td></tr>
+<tr><td>R4</td><td>Failed write leaves inconsistent state.</td><td>3 × 5 = 15</td><td>Injected failure, rollback and retry</td></tr>
+<tr><td>R5</td><td>Wrong tax, currency, rounding or line-derived total.</td><td>3 × 4 = 12</td><td>Unit and API currency and amount checks</td></tr>
+<tr><td>R6</td><td>Validation fails with an unexpected server error.</td><td>4 × 3 = 12</td><td>Generated EP and BVA with status and field assertions</td></tr>
+<tr><td>R7</td><td>Keyboard and assistive technology users cannot complete forms.</td><td>3 × 4 = 12</td><td>Keyboard flow, axe and Lighthouse</td></tr>
+<tr><td>R8</td><td>Invoice read becomes too slow under concurrent use.</td><td>3 × 3 = 9</td><td>Repeated 1 and 5 VU k6 runs</td></tr>
+<tr><td>R9</td><td>A vulnerable dependency or runtime is exploited to compromise the service or its data.</td><td>3 &times; 5 = 15</td><td>Composer and npm audit, passive version disclosure review</td></tr>
+<tr><td>P1</td><td>Unavailable tooling or CI blocks reproducibility.</td><td>4 × 4 = 16</td><td>Pinned tools, raw logs and clean fixture bootstrap</td></tr>
+<tr><td>P2</td><td>Traceability or contribution evidence is incomplete.</td><td>3 × 4 = 12</td><td>Case IDs, requirement mapping, owner review and viva rehearsal</td></tr>
+</tbody></table>
+<p>Likelihood and impact both use integer scales from 1, lowest, to 5, highest. Scores 15–25 require the highest depth, 8–14 standard depth and 1–7 smoke coverage.</p>
+<table><thead><tr><th>Likelihood / impact</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th></tr></thead><tbody>
+<tr><th>1</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+<tr><th>2</th><td>2</td><td>4</td><td>6</td><td>8</td><td>10</td></tr>
+<tr><th>3</th><td>3</td><td>6</td><td>9 · R8</td><td>12 · R5 R7 P2</td><td>15 &middot; R3 R4 R9</td></tr>
+<tr><th>4</th><td>4</td><td>8</td><td>12 · R6</td><td>16 · P1</td><td>20 · R1 R2</td></tr>
+<tr><th>5</th><td>5</td><td>10</td><td>15</td><td>20</td><td>25</td></tr>
+</tbody></table>
+
+<h2>Defects and control actions</h2>
+<table><thead><tr><th>ID</th><th>Finding</th><th>Severity / priority</th><th>Triage</th></tr></thead><tbody>
+<tr><td>DEF-01</td><td>Overpayment reached API clients as HTTP 500, R1.</td><td>Major / P1</td><td>Fixed locally. Regression failed with 500 before the change and passed after the endpoint returned a validation error.</td></tr>
+<tr><td>DEF-02</td><td>An unsupported currency code hit formatting before request validation, R6.</td><td>Major / P1</td><td>Fixed locally. The invoice case changed from 500 to the expected field-level 422 on rerun.</td></tr>
+<tr><td>DEF-03</td><td>Malformed date is parsed before the request rules can produce a field error, R6.</td><td>Major / P2</td><td>Fixed locally. The date middleware now returns a validation error for malformed inputs, with regression and generated-case evidence.</td></tr>
+</tbody></table>
+<h3>Root-cause chains and fishbone inputs</h3>
+<p><strong>DEF-01</strong> Client sees 500 → API treats the error as unexpected → payment rejection is a generic exception → controller has no classification for the domain outcome → earlier coverage verified job behavior without asserting the HTTP contract. Fishbone inputs are domain exception design, HTTP mapping, integration oracle and missing readback. Corrective action adds a specific exception and maps it to an amount validation error. Preventive action asserts status, field and persisted state whenever a new rejection rule is added.</p>
+<p><strong>DEF-02</strong> Client sees 500 → the item-price formatter resolves a currency symbol → an unknown code throws → normalization precedes the FormRequest validation → invalid currency was absent from the request-level integration corpus. Fishbone inputs are middleware order, normalization contract, invalid test data and exception handling. Corrective action lets the validator handle invalid currency input. Preventive action exercises unsupported foreign codes on both endpoints from generated test data.</p>
+<p>These three confirmed functional defects fall in the validation and error-handling category, representing 100% of this three-item Pareto sample. They were logged as public issues in the SQE project repository; all three issues remained open on 28 November, and the first two fixes are still awaiting integration. <a href="https://github.com/Abdul-Mueed92/SQE-PROJECT-FINAL/issues/1">DEF-01</a> · <a href="https://github.com/Abdul-Mueed92/SQE-PROJECT-FINAL/issues/2">DEF-02</a> · <a href="https://github.com/Abdul-Mueed92/SQE-PROJECT-FINAL/issues/3">DEF-03</a> · <a href="evidence/api/overpayment-before.xml">Failing regression</a></p>
+
+<h2>Accessibility and usability</h2>
+<p>Authenticated baseline Lighthouse results were 83 accessibility, 96 best practices and 91 SEO on invoice creation, and 91 accessibility, 92 best practices and 83 SEO on payment recording. The baseline axe scan found 15 violated nodes in four categories for invoice creation and 21 in four categories for payment recording. Counts by tool can overlap. The first correction adds accessible names to the invoice line item name and quantity inputs. <a href="evidence/accessibility/before/summary.json">Baseline measurements</a></p>
+<table><thead><tr><th>Observed issue and element</th><th>Impact</th><th>Correction</th></tr></thead><tbody>
+<tr><td>Missing name on the invoice line inputs, including name, quantity and price.</td><td>Critical axe impact. Screen-reader users cannot reliably distinguish the fields.</td><td>Provide accessible names. Name and quantity corrected in the Blade form. Price labeling remains separate.</td></tr>
+<tr><td>Low-contrast icon or text in both workflow screens.</td><td>Serious axe impact. The item-delete icon and other controls can be hard to distinguish.</td><td>Use foreground colors that meet contrast requirements on the actual backgrounds.</td></tr>
+<tr><td>Empty table headers in invoice item rows and missing landmarks in payment screen.</td><td>Minor to moderate. Navigation and table structure are harder to understand.</td><td>Label the header columns that have actions and expose a main landmark.</td></tr>
+</tbody></table>
+<p id="accessibility-after">After the accessible-name fixes, the invoice label violation fell from three fields to one, an unrelated category color input. Lighthouse on the clean rebuilt browser returned invoice accessibility 83, best practices 96 and SEO 91, and payment accessibility 91, best practices 92 and SEO 91. Axe still reports contrast issues, one empty table header, page landmarks and the unrelated color input. These remain visible findings. <a href="evidence/accessibility/after/summary.json">After-scan results</a></p>
+<p>Both required Playwright workflows passed on the rebuilt assets. Invoice creation displayed the saved draft and its API readback. Payment first rejected an excessive amount without a write, then accepted the corrected amount. Keyboard navigation reached Save and submitted with Enter. <a href="evidence/section3/browser-final/junit.xml">Clean task and keyboard run</a></p>
+
+<h2>Defensive security</h2>
+<p>The passive scope was the synthetic loopback instance. Invoice data includes customer identity, line amounts, status, dates and invoice ID. Payment data includes the linked invoice, transaction number, amount, currency and account ID. The tested staff routes were <code>/1/sales/invoices/create</code> and <code>/1/modals/documents/{invoiceId}/transactions/create</code>; the API workflow uses <code>/api/documents</code> and <code>/api/transactions</code>. Role policy is corroborated by <code>database/seeds/Permissions.php</code> and the payment modal permission check.</p>
+<table><thead><tr><th>Role</th><th>Action</th><th>Expected</th><th>Observed and evidence</th></tr></thead><tbody>
+<tr><td>Staff</td><td>Open invoice creation</td><td>Allow</td><td>Allowed, HTTP 200 with form (SEC-01)</td></tr>
+<tr><td>Staff</td><td>Open payment form</td><td>Allow</td><td>Allowed, HTTP 200 with form (SEC-02)</td></tr>
+<tr><td>Customer</td><td>Open invoice creation</td><td>Deny</td><td>Denied, HTTP 403, no form (SEC-03)</td></tr>
+<tr><td>Customer</td><td>Open payment form</td><td>Deny</td><td>Denied, HTTP 403, no form (SEC-04)</td></tr>
+</tbody></table>
+<p>Playwright reran all four access decisions on 28 November; all matched the expected result. The session cookie inspection on the same date found HttpOnly and SameSite=Lax, consistent with <code>config/session.php</code>. The synthetic HTTP server cannot verify the Secure attribute in a TLS deployment. The XSRF cookie is intentionally readable by client code and is distinct from the HttpOnly session cookie. <a href="evidence/security/role-decisions.json">Role decisions</a> ? <a href="evidence/security/session-cookie-attributes.json">Cookie attributes</a></p>
+<p>Both browser workflows were captured with ZAP 2.17.0 in safe passive mode. The final capture recorded 96 URLs, 177 alert instances and four passive records still queued, so it is an incomplete alert inventory. The observations below are from the local synthetic setup and do not establish production exposure.</p>
+<table><thead><tr><th>Observation and severity</th><th>Evidence and root cause</th><th>Impact and risk</th><th>Recommended correction</th></tr></thead><tbody>
+<tr><td>Clear-text API credentials (ZAP High)</td><td>Basic credentials were sent to the test API over loopback HTTP during Playwright workflow capture; this was the deliberately local test transport.</td><td>Anyone able to observe a non-TLS network path could recover credentials. R2.</td><td>Require HTTPS for deployment, keep credentials out of shared environments, and use HTTPS for authenticated API traffic.</td></tr>
+<tr><td>Known-vulnerable PHP version disclosed (ZAP High)</td><td>The local server disclosed PHP 8.2.12 in its response. ZAP matched that version to known vulnerabilities.</td><td>Known runtime flaws may be exploitable if the deployed runtime is similarly unpatched. R9.</td><td>Use a currently patched supported PHP release and suppress unnecessary version disclosure.</td></tr>
+<tr><td>Wildcard CORS (ZAP Medium)</td><td><code>config/cors.php</code> allows all origins, methods and headers on API paths; credentials are disabled. ZAP observed <code>Access-Control-Allow-Origin: *</code> on the unauthenticated items API.</td><td>Any site can read data exposed by unauthenticated API responses. Authenticated cookie responses are not enabled for cross-origin credentialed access by this setting. R2.</td><td>Restrict allowed origins and methods to the clients that need them; review which API responses are intentionally public.</td></tr>
+<tr><td>No Content Security Policy (ZAP Medium)</td><td>The response header middleware sets several protections but does not set CSP.</td><td>Browsers lack an additional policy layer that can limit script and resource injection impact. R2.</td><td>Introduce a tested report-only CSP, review violations, then enforce a policy appropriate to the application.</td></tr>
+<tr><td>Missing X-Content-Type-Options on some responses (ZAP Low)</td><td>ZAP found 31 affected responses. <code>AddXHeader</code> sets <code>nosniff</code> for responses passing through it; static or alternate responses may bypass the middleware.</td><td>Some browsers may MIME-sniff content on affected responses. R2.</td><td>Set <code>X-Content-Type-Options: nosniff</code> at the web server for all relevant responses and re-scan.</td></tr>
+<tr><td>Dependency advisories (Composer: 223 locked packages; npm: 29 affected entries, including 5 high and 1 critical)</td><td>Lockfiles contain older package versions. npm flags Swiper 9.4.1 for a prototype-pollution advisory; Composer reports 11 advisories across five packages, including Laravel Framework 10.50.4 and Laravel-Mediable 5.9.1. Workflow reachability was not established.</td><td>Exploitable paths may affect browser integrity, file handling or service behavior; impact depends on reachable vulnerable code. R9.</td><td>Upgrade affected packages to fixed compatible releases, rebuild assets, rerun dependency audits and workflow regression checks.</td></tr>
+</tbody></table>
+<p>Composer audit checked the locked PHP package versions and npm audit checked the JavaScript lockfile. These are inventory findings, not proof of exploitability. Cookie flags and ZAP's clear-text credential alert must be interpreted in the local HTTP setup described above. <a href="evidence/security/verified-workflows/proxy-browser/junit.xml">Proxied workflow tests</a> ? <a href="evidence/security/verified-workflows/zap-passive.json">ZAP capture</a> ? <a href="evidence/composer-audit.json">Composer audit</a> ? <a href="evidence/npm-audit.json">npm audit</a></p>
+<p>The controlled failure/recovery check was rerun on 28 November. An injected pre-write dependency failure left the invoice sent with its full balance and no transaction. Restoring the dependency allowed a retry to settle the invoice with one transaction; a duplicate retry did not add another. The PHPUnit run passed one test with 25 assertions. <a href="evidence/security/recovery-junit.xml">Recovery JUnit result</a></p>
+
+<h2>Monitoring and completion</h2>
+<table><thead><tr><th>Progress checkpoint</th><th>Result</th><th>Control action</th></tr></thead><tbody>
+<tr><td>18 November</td><td>142 unit cases and 269 assertions.</td><td>Expand beyond rule selection to decision pairs and recurring boundaries.</td></tr>
+<tr><td>26 November</td><td>Five focused API cases and 420 feature cases.</td><td>Link invoice and payment records and move generated cases to an executable oracle.</td></tr>
+<tr><td>27 November</td><td>99 generated API outcomes, expanded browser coverage, SonarQube analysis, payment job coverage and mutation results.</td><td>Preserve the before/after defect evidence and complete the outstanding hosted quality-gate work.</td></tr>
+<tr><td>28 November</td><td>Four role decisions passed; recovery passed with 25 assertions; four k6 runs met the failure-rate target but missed p95. Live GitHub review found no registered workflows or checks on PRs 4 and 5.</td><td>Keep the release on hold. Publish and run the gates on the project repository, then repeat CI evidence and resolve ownership, license eligibility and performance follow-up.</td></tr>
+</tbody></table>
+<p>For GQM, eight of eight candidate requirements trace to executed evidence for the stated behaviors. The three functional defects arose in three components with 200 nonblank, non-comment lines, giving a scoped density of 15 findings per thousand lines. This diagnostic density is limited to those components. All three GitHub issues are still open; no issue has been recorded as reopened. <a href="evidence/defect-density.json">Density calculation inputs</a></p>
+<table><thead><tr><th>Release criterion</th><th>Target</th><th>Recorded status</th></tr></thead><tbody>
+<tr><td>Financial integrity, R1/R3/R4</td><td>Zero unintended changes after overpayment, duplicate and failure</td><td>Verified in linked payment API and recovery scenario.</td></tr>
+<tr><td>Role isolation, R2</td><td>Four verified access decisions across both roles with at least one allow and deny</td><td id="roles-results">4 of 4 passed. Two allows and two denials.</td></tr>
+<tr><td>Read performance, R8</td><td>p95 ≤ 350 ms for 1 VU and ≤ 1,200 ms for 5 VUs, unexpected failure rate &lt; 1% across two runs each</td><td id="performance-results">All four runs met the failure-rate limit and missed the response-time limit.</td></tr>
+</tbody></table>
+<p id="other-evidence">Section 2 remains open. Local evidence includes the generated API corpus, malformed-date correction, SonarQube metrics, a 122-test focused white-box suite, payment-job coverage and mutation results. The invoice document model and creation job still have coverage gaps beyond the exercised rules. The public SQE repository has no registered Actions workflows or workflow runs; PRs 4 and 5 are open with zero check runs. The two assessment workflows are only in this local checkout, whose Git origin still points to upstream Akaunting. The quality gate also requires configured Sonar host and token secrets. Branch protection could not be verified without authenticated GitHub access. Group hours, member ownership and registration data also remain unrecorded. See <a href="evidence/github-live-status.json">live GitHub status snapshot</a>.</p>
+<p><strong>Residual risk.</strong> R1 and R3 are reduced by cap and duplicate checks, with other invoice states still open. R2 retains risk outside the observed role routes and browser paths. R4 is reduced for the injected pre-write failure, with other failure points open. R5 retains gaps in invoice total and currency combinations. R6 is reduced by the verified date correction; R9 retains dependency and runtime exposure. R7 remains open for contrast, keyboard navigation and price labeling. R8 missed its response-time limit in all four runs; failure rates stayed below 1%. P1 remains open because the quality workflows are not registered or running in the project repository. P2 remains open for contribution records, registration evidence, area ownership and hours.</p>
+<p><strong>Release decision: hold.</strong> Financial checks passed in the synthetic fixture. The load acceptance criterion failed, and the baseline license, release controls and remaining workflow coverage require resolution before submission.</p>
+
+<h2>AI use and viva preparation</h2>
+<p>Codex assisted with reviewing the assignment and prior results, drafting tests and test artifacts, reproducing defects, writing focused fixes, and drafting this report. <a href="ai-prompts.txt">Retained prompt</a></p>
+<table><thead><tr><th>AI-assisted output</th><th>Verification performed in this session</th></tr></thead><tbody>
+<tr><td>White-box cases, scope and decision reasoning</td><td>Read application source, executed JUnit checks, measured Xdebug branches and compared manual complexity with the AST result.</td></tr>
+<tr><td>API generator, workflow tests and two fixes</td><td>Ran the generated corpus against Laravel's HTTP kernel and saved before/after case results, rejection readback and recovery evidence.</td></tr>
+<tr><td>Browser, test tooling and release documentation</td><td>Ran the scripts, inspected raw artifacts and kept failed or incomplete work explicit in the report. No student review is inferred.</td></tr>
+</tbody></table>
+<p>Team members must review each contribution and record what they independently checked or changed. Area ownership and individual verification require the actual team member records. Viva walkthroughs include recalculating the payment boundary, changing a YAML limit and explaining the generated cases, and showing the recovery test's persisted-state assertions.</p>
+</body>
+</html>

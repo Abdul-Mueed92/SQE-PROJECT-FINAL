@@ -34,6 +34,9 @@
 
         name="{{ $name }}"
         title="{{ $label }}"
+        @if (isset($attributes['row-input']) && !empty($label))
+        aria-label="{{ $label }}"
+        @endif
         :group_class="'{{ $formGroupClass }}'"
 
         @if (! empty($icon))

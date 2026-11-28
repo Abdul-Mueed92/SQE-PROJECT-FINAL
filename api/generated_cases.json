@@ -1,0 +1,794 @@
+[
+  {
+    "id": "InvoiceCreate:type:missing",
+    "schema": "InvoiceCreate",
+    "field": "type",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:type:valid",
+    "schema": "InvoiceCreate",
+    "field": "type",
+    "partition": "valid",
+    "expected": 201,
+    "value": "invoice"
+  },
+  {
+    "id": "InvoiceCreate:type:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "type",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "InvoiceCreate:document_number:missing",
+    "schema": "InvoiceCreate",
+    "field": "document_number",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:document_number:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "document_number",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "InvoiceCreate:document_number:minLength-below",
+    "schema": "InvoiceCreate",
+    "field": "document_number",
+    "partition": "minLength-below",
+    "expected": 422,
+    "value": ""
+  },
+  {
+    "id": "InvoiceCreate:document_number:minLength-at",
+    "schema": "InvoiceCreate",
+    "field": "document_number",
+    "partition": "minLength-at",
+    "expected": 201,
+    "value": "X"
+  },
+  {
+    "id": "InvoiceCreate:document_number:minLength-above",
+    "schema": "InvoiceCreate",
+    "field": "document_number",
+    "partition": "minLength-above",
+    "expected": 201,
+    "value": "XX"
+  },
+  {
+    "id": "InvoiceCreate:status:missing",
+    "schema": "InvoiceCreate",
+    "field": "status",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:status:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "status",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "InvoiceCreate:status:minLength-below",
+    "schema": "InvoiceCreate",
+    "field": "status",
+    "partition": "minLength-below",
+    "expected": 422,
+    "value": ""
+  },
+  {
+    "id": "InvoiceCreate:status:minLength-at",
+    "schema": "InvoiceCreate",
+    "field": "status",
+    "partition": "minLength-at",
+    "expected": 201,
+    "value": "X"
+  },
+  {
+    "id": "InvoiceCreate:status:minLength-above",
+    "schema": "InvoiceCreate",
+    "field": "status",
+    "partition": "minLength-above",
+    "expected": 201,
+    "value": "XX"
+  },
+  {
+    "id": "InvoiceCreate:issued_at:missing",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:issued_at:valid",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "valid",
+    "expected": 201,
+    "value": "2026-11-01 12:00:00"
+  },
+  {
+    "id": "InvoiceCreate:issued_at:unparseable",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "unparseable",
+    "expected": 422,
+    "value": "invalid-date"
+  },
+  {
+    "id": "InvoiceCreate:issued_at:date-before",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "date-before",
+    "expected": 201,
+    "value": "2026-11-30 11:59:59"
+  },
+  {
+    "id": "InvoiceCreate:issued_at:date-at",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "date-at",
+    "expected": 201,
+    "value": "2026-11-30 12:00:00"
+  },
+  {
+    "id": "InvoiceCreate:issued_at:date-after",
+    "schema": "InvoiceCreate",
+    "field": "issued_at",
+    "partition": "date-after",
+    "expected": 422,
+    "value": "2026-11-30 12:00:01"
+  },
+  {
+    "id": "InvoiceCreate:due_at:missing",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:due_at:valid",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "valid",
+    "expected": 201,
+    "value": "2026-11-30 12:00:00"
+  },
+  {
+    "id": "InvoiceCreate:due_at:unparseable",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "unparseable",
+    "expected": 422,
+    "value": "invalid-date"
+  },
+  {
+    "id": "InvoiceCreate:due_at:date-before",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "date-before",
+    "expected": 422,
+    "value": "2026-11-01 11:59:59"
+  },
+  {
+    "id": "InvoiceCreate:due_at:date-at",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "date-at",
+    "expected": 201,
+    "value": "2026-11-01 12:00:00"
+  },
+  {
+    "id": "InvoiceCreate:due_at:date-after",
+    "schema": "InvoiceCreate",
+    "field": "due_at",
+    "partition": "date-after",
+    "expected": 201,
+    "value": "2026-11-01 12:00:01"
+  },
+  {
+    "id": "InvoiceCreate:amount:missing",
+    "schema": "InvoiceCreate",
+    "field": "amount",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:amount:valid",
+    "schema": "InvoiceCreate",
+    "field": "amount",
+    "partition": "valid",
+    "expected": 201,
+    "value": 10
+  },
+  {
+    "id": "InvoiceCreate:currency_code:missing",
+    "schema": "InvoiceCreate",
+    "field": "currency_code",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:currency_code:valid",
+    "schema": "InvoiceCreate",
+    "field": "currency_code",
+    "partition": "valid",
+    "expected": 201,
+    "value": "USD"
+  },
+  {
+    "id": "InvoiceCreate:currency_code:unknown",
+    "schema": "InvoiceCreate",
+    "field": "currency_code",
+    "partition": "unknown",
+    "expected": 422,
+    "value": "ZZZ"
+  },
+  {
+    "id": "InvoiceCreate:currency_rate:missing",
+    "schema": "InvoiceCreate",
+    "field": "currency_rate",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:currency_rate:valid",
+    "schema": "InvoiceCreate",
+    "field": "currency_rate",
+    "partition": "valid",
+    "expected": 201,
+    "value": 1
+  },
+  {
+    "id": "InvoiceCreate:currency_rate:minimum-below",
+    "schema": "InvoiceCreate",
+    "field": "currency_rate",
+    "partition": "minimum-below",
+    "expected": 422,
+    "value": -0.01
+  },
+  {
+    "id": "InvoiceCreate:currency_rate:minimum-at",
+    "schema": "InvoiceCreate",
+    "field": "currency_rate",
+    "partition": "minimum-at",
+    "expected": 422,
+    "value": 0.0
+  },
+  {
+    "id": "InvoiceCreate:currency_rate:minimum-above",
+    "schema": "InvoiceCreate",
+    "field": "currency_rate",
+    "partition": "minimum-above",
+    "expected": 201,
+    "value": 0.01
+  },
+  {
+    "id": "InvoiceCreate:contact_id:missing",
+    "schema": "InvoiceCreate",
+    "field": "contact_id",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:contact_id:missing-record",
+    "schema": "InvoiceCreate",
+    "field": "contact_id",
+    "partition": "missing-record",
+    "expected": 422,
+    "value": 999999
+  },
+  {
+    "id": "InvoiceCreate:contact_id:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "contact_id",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": "invalid"
+  },
+  {
+    "id": "InvoiceCreate:contact_name:missing",
+    "schema": "InvoiceCreate",
+    "field": "contact_name",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:contact_name:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "contact_name",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "InvoiceCreate:contact_name:minLength-below",
+    "schema": "InvoiceCreate",
+    "field": "contact_name",
+    "partition": "minLength-below",
+    "expected": 422,
+    "value": ""
+  },
+  {
+    "id": "InvoiceCreate:contact_name:minLength-at",
+    "schema": "InvoiceCreate",
+    "field": "contact_name",
+    "partition": "minLength-at",
+    "expected": 201,
+    "value": "X"
+  },
+  {
+    "id": "InvoiceCreate:contact_name:minLength-above",
+    "schema": "InvoiceCreate",
+    "field": "contact_name",
+    "partition": "minLength-above",
+    "expected": 201,
+    "value": "XX"
+  },
+  {
+    "id": "InvoiceCreate:category_id:missing",
+    "schema": "InvoiceCreate",
+    "field": "category_id",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:category_id:missing-record",
+    "schema": "InvoiceCreate",
+    "field": "category_id",
+    "partition": "missing-record",
+    "expected": 422,
+    "value": 999999
+  },
+  {
+    "id": "InvoiceCreate:category_id:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "category_id",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": "invalid"
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:missing",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:wrong-type",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:minLength-below",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "minLength-below",
+    "expected": 422,
+    "value": ""
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:minLength-at",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "minLength-at",
+    "expected": 201,
+    "value": "X"
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:minLength-above",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "minLength-above",
+    "expected": 201,
+    "value": "XX"
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:maxLength-below",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "maxLength-below",
+    "expected": 201,
+    "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:maxLength-at",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "maxLength-at",
+    "expected": 201,
+    "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  {
+    "id": "InvoiceCreate:items.0.name:maxLength-above",
+    "schema": "InvoiceCreate",
+    "field": "items.0.name",
+    "partition": "maxLength-above",
+    "expected": 422,
+    "value": "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  },
+  {
+    "id": "InvoiceCreate:items.0.quantity:missing",
+    "schema": "InvoiceCreate",
+    "field": "items.0.quantity",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:items.0.quantity:valid",
+    "schema": "InvoiceCreate",
+    "field": "items.0.quantity",
+    "partition": "valid",
+    "expected": 201,
+    "value": "2*3"
+  },
+  {
+    "id": "InvoiceCreate:items.0.quantity:invalid-expression",
+    "schema": "InvoiceCreate",
+    "field": "items.0.quantity",
+    "partition": "invalid-expression",
+    "expected": 422,
+    "value": "invalid"
+  },
+  {
+    "id": "InvoiceCreate:items.0.price:missing",
+    "schema": "InvoiceCreate",
+    "field": "items.0.price",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "InvoiceCreate:items.0.price:valid",
+    "schema": "InvoiceCreate",
+    "field": "items.0.price",
+    "partition": "valid",
+    "expected": 201,
+    "value": 12.34
+  },
+  {
+    "id": "InvoiceCreate:items.0.price:minimum-below",
+    "schema": "InvoiceCreate",
+    "field": "items.0.price",
+    "partition": "minimum-below",
+    "expected": 422,
+    "value": -0.01
+  },
+  {
+    "id": "InvoiceCreate:items.0.price:minimum-at",
+    "schema": "InvoiceCreate",
+    "field": "items.0.price",
+    "partition": "minimum-at",
+    "expected": 422,
+    "value": 0.0
+  },
+  {
+    "id": "InvoiceCreate:items.0.price:minimum-above",
+    "schema": "InvoiceCreate",
+    "field": "items.0.price",
+    "partition": "minimum-above",
+    "expected": 201,
+    "value": 0.01
+  },
+  {
+    "id": "PaymentCreate:type:missing",
+    "schema": "PaymentCreate",
+    "field": "type",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:type:valid",
+    "schema": "PaymentCreate",
+    "field": "type",
+    "partition": "valid",
+    "expected": 201,
+    "value": "income"
+  },
+  {
+    "id": "PaymentCreate:type:wrong-type",
+    "schema": "PaymentCreate",
+    "field": "type",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "PaymentCreate:number:missing",
+    "schema": "PaymentCreate",
+    "field": "number",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:number:wrong-type",
+    "schema": "PaymentCreate",
+    "field": "number",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": 123
+  },
+  {
+    "id": "PaymentCreate:number:minLength-below",
+    "schema": "PaymentCreate",
+    "field": "number",
+    "partition": "minLength-below",
+    "expected": 422,
+    "value": ""
+  },
+  {
+    "id": "PaymentCreate:number:minLength-at",
+    "schema": "PaymentCreate",
+    "field": "number",
+    "partition": "minLength-at",
+    "expected": 201,
+    "value": "X"
+  },
+  {
+    "id": "PaymentCreate:number:minLength-above",
+    "schema": "PaymentCreate",
+    "field": "number",
+    "partition": "minLength-above",
+    "expected": 201,
+    "value": "XX"
+  },
+  {
+    "id": "PaymentCreate:account_id:missing",
+    "schema": "PaymentCreate",
+    "field": "account_id",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:account_id:missing-record",
+    "schema": "PaymentCreate",
+    "field": "account_id",
+    "partition": "missing-record",
+    "expected": 422,
+    "value": 999999
+  },
+  {
+    "id": "PaymentCreate:account_id:wrong-type",
+    "schema": "PaymentCreate",
+    "field": "account_id",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": "invalid"
+  },
+  {
+    "id": "PaymentCreate:paid_at:missing",
+    "schema": "PaymentCreate",
+    "field": "paid_at",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:paid_at:valid",
+    "schema": "PaymentCreate",
+    "field": "paid_at",
+    "partition": "valid",
+    "expected": 201,
+    "value": "2026-11-15 12:00:00"
+  },
+  {
+    "id": "PaymentCreate:paid_at:unparseable",
+    "schema": "PaymentCreate",
+    "field": "paid_at",
+    "partition": "unparseable",
+    "expected": 422,
+    "value": "invalid-date"
+  },
+  {
+    "id": "PaymentCreate:amount:missing",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:amount:valid",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "valid",
+    "expected": 201,
+    "value": 25.5
+  },
+  {
+    "id": "PaymentCreate:amount:minimum-below",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "minimum-below",
+    "expected": 422,
+    "value": -0.01
+  },
+  {
+    "id": "PaymentCreate:amount:minimum-at",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "minimum-at",
+    "expected": 201,
+    "value": 0.0
+  },
+  {
+    "id": "PaymentCreate:amount:minimum-above",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "minimum-above",
+    "expected": 201,
+    "value": 0.01
+  },
+  {
+    "id": "PaymentCreate:amount:maximum-below",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "maximum-below",
+    "expected": 201,
+    "value": 99.99
+  },
+  {
+    "id": "PaymentCreate:amount:maximum-at",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "maximum-at",
+    "expected": 201,
+    "value": 100.0
+  },
+  {
+    "id": "PaymentCreate:amount:maximum-above",
+    "schema": "PaymentCreate",
+    "field": "amount",
+    "partition": "maximum-above",
+    "expected": 422,
+    "value": 100.01
+  },
+  {
+    "id": "PaymentCreate:currency_code:missing",
+    "schema": "PaymentCreate",
+    "field": "currency_code",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:currency_code:valid",
+    "schema": "PaymentCreate",
+    "field": "currency_code",
+    "partition": "valid",
+    "expected": 201,
+    "value": "USD"
+  },
+  {
+    "id": "PaymentCreate:currency_code:unknown",
+    "schema": "PaymentCreate",
+    "field": "currency_code",
+    "partition": "unknown",
+    "expected": 422,
+    "value": "ZZZ"
+  },
+  {
+    "id": "PaymentCreate:currency_rate:missing",
+    "schema": "PaymentCreate",
+    "field": "currency_rate",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:currency_rate:valid",
+    "schema": "PaymentCreate",
+    "field": "currency_rate",
+    "partition": "valid",
+    "expected": 201,
+    "value": 1
+  },
+  {
+    "id": "PaymentCreate:currency_rate:minimum-below",
+    "schema": "PaymentCreate",
+    "field": "currency_rate",
+    "partition": "minimum-below",
+    "expected": 422,
+    "value": -0.01
+  },
+  {
+    "id": "PaymentCreate:currency_rate:minimum-at",
+    "schema": "PaymentCreate",
+    "field": "currency_rate",
+    "partition": "minimum-at",
+    "expected": 422,
+    "value": 0.0
+  },
+  {
+    "id": "PaymentCreate:currency_rate:minimum-above",
+    "schema": "PaymentCreate",
+    "field": "currency_rate",
+    "partition": "minimum-above",
+    "expected": 201,
+    "value": 0.01
+  },
+  {
+    "id": "PaymentCreate:contact_id:None",
+    "schema": "PaymentCreate",
+    "field": "contact_id",
+    "partition": null,
+    "expected": 201,
+    "value": null
+  },
+  {
+    "id": "PaymentCreate:contact_id:missing-record",
+    "schema": "PaymentCreate",
+    "field": "contact_id",
+    "partition": "missing-record",
+    "expected": 422,
+    "value": 999999
+  },
+  {
+    "id": "PaymentCreate:category_id:missing",
+    "schema": "PaymentCreate",
+    "field": "category_id",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:category_id:missing-record",
+    "schema": "PaymentCreate",
+    "field": "category_id",
+    "partition": "missing-record",
+    "expected": 422,
+    "value": 999999
+  },
+  {
+    "id": "PaymentCreate:category_id:wrong-type",
+    "schema": "PaymentCreate",
+    "field": "category_id",
+    "partition": "wrong-type",
+    "expected": 422,
+    "value": "invalid"
+  },
+  {
+    "id": "PaymentCreate:payment_method:missing",
+    "schema": "PaymentCreate",
+    "field": "payment_method",
+    "partition": "missing",
+    "expected": 422,
+    "remove": true
+  },
+  {
+    "id": "PaymentCreate:payment_method:unknown",
+    "schema": "PaymentCreate",
+    "field": "payment_method",
+    "partition": "unknown",
+    "expected": 422,
+    "value": "unknown"
+  }
+]

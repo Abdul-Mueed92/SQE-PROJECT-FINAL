@@ -71,6 +71,12 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 /node_modules
+/sqe/browser/node_modules/
+/sqe/browser/test-results/
+/sqe/browser/playwright-report/
+/api/fixtures.json
+/api/fixtures.local.json
+__pycache__/
 /public/hot
 /public/storage
 /public/js

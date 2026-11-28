@@ -3,8 +3,10 @@
 namespace App\Http\Middleware;
 
 use App\Events\Common\DatesFormating;
+use Carbon\Exceptions\InvalidFormatException;
 use Closure;
 use Date;
+use Illuminate\Validation\ValidationException;
 
 class DateFormat
 {
@@ -42,10 +44,18 @@ class DateFormat
                     continue;
                 }
 
-                if (Date::parse($date)->format('H:i:s') == '00:00:00') {
-                    $new_date = Date::parse($date)->format('Y-m-d') . ' ' . Date::now()->format('H:i:s');
+                try {
+                    $parsed = Date::parse($date);
+                } catch (InvalidFormatException | \TypeError) {
+                    throw ValidationException::withMessages([
+                        $field => trans('validation.date', ['attribute' => str_replace('_', ' ', $field)]),
+                    ]);
+                }
+
+                if ($parsed->format('H:i:s') == '00:00:00') {
+                    $new_date = $parsed->format('Y-m-d') . ' ' . Date::now()->format('H:i:s');
                 } else {
-                    $new_date = Date::parse($date)->toDateTimeString();
+                    $new_date = $parsed->toDateTimeString();
                 }
 
                 $request->request->set($field, $new_date);

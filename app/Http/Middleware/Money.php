@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use Akaunting\Money\Currency;
 use Closure;
 use OutOfBoundsException;
 use Illuminate\Support\Str;
@@ -27,6 +28,10 @@ class Money
 
         if ($request->get('currency_code')) {
             $currency_code = $request->get('currency_code');
+        }
+
+        if (! is_string($currency_code) || ! array_key_exists(strtoupper(trim($currency_code)), Currency::getCurrencies())) {
+            return $next($request);
         }
 
         $parameters = [

@@ -1,0 +1,87 @@
+name: SQE quality gate
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      XDEBUG_MODE: coverage
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: bcmath, ctype, dom, fileinfo, intl, gd, mbstring, pdo_sqlite, sqlite, xml, zip
+          coverage: xdebug
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install project and test dependencies
+        run: |
+          cp .env.testing .env
+          composer install --no-interaction --prefer-dist
+          npm ci
+          npm run production
+          npm ci --prefix sqe/browser
+          python -m pip install PyYAML==6.0.3
+      - name: Verify generated cases and execute PHP suites
+        run: |
+          mkdir -p sqe/evidence/ci
+          python api/generate_cases.py
+          git diff --exit-code api/generated_cases.json
+          python api/verify_regeneration.py
+          php vendor/bin/phpunit --log-junit sqe/evidence/ci/phpunit.xml
+      - name: Execute browser workflows
+        env:
+          SQE_BROWSER_EVIDENCE: ${{ github.workspace }}/sqe/evidence/ci/browser
+        run: |
+          node sqe/browser/node_modules/@playwright/test/cli.js install --with-deps chromium
+          bash sqe/start-test-server.sh > sqe/evidence/ci/server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid"' EXIT
+          curl --fail --retry 30 --retry-connrefused --retry-delay 2 http://127.0.0.1:8765/auth/login --output /dev/null
+          node sqe/browser/node_modules/@playwright/test/cli.js test --config sqe/browser/playwright.config.cjs
+      - name: Enforce payment line and branch coverage
+        run: |
+          mkdir -p sqe/evidence/static
+          php vendor/bin/phpunit -c phpunit.payment-limit-coverage.xml --path-coverage \
+            --coverage-clover sqe/evidence/static/coverage.xml \
+            --coverage-html sqe/evidence/static/payment-coverage \
+            --log-junit sqe/evidence/static/junit.xml
+          python sqe/check-payment-coverage.py sqe/evidence/static/coverage.xml \
+            sqe/evidence/static/payment-coverage/CreateBankingDocumentTransaction.php.html
+      - name: Enforce mutation threshold for covered payment logic
+        run: |
+          mkdir -p sqe/evidence/mutation/section2
+          python sqe/run-custom-mutations.py
+          curl --fail --silent --show-error --location \
+            https://github.com/infection/infection/releases/download/0.29.14/infection.phar \
+            --output "$RUNNER_TEMP/infection.phar"
+          php "$RUNNER_TEMP/infection.phar" --configuration=infection.json.dist \
+            --test-framework-options='--filter=InvoicePayment(Limit|Preparation)Test --do-not-cache-result' \
+            --filter=CreateBankingDocumentTransaction.php --no-progress --threads=2 --min-covered-msi=75
+      - name: Enforce Sonar quality gate
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: -Dsonar.qualitygate.wait=true
+      - name: Preserve CI evidence
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sqe-quality-evidence
+          path: sqe/evidence

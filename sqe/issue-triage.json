@@ -1,0 +1,17 @@
+[
+  {
+    "id": "DEF-01",
+    "title": "SQE DEF-01 — Invoice payment over balance returns HTTP 500",
+    "body": "Severity: Major\nPriority: P1\nRisk: R1, financial integrity\nTriage: Locally fixed and regression-tested. Awaiting integration into the assessment branch.\n\nIn the disposable SQE company, create a 100 USD invoice, record 25 USD, then submit 75.01 USD using the normal invoice-payment API. Before the fix the request returned 500. The expected result is 422 with an amount error. Readback must still show the 75 USD balance and the original payment only.\n\nThe API received a generic exception from the payment job. The local fix maps a specific balance exception to an amount validation error. The before and after JUnit files are listed in the SQE evidence report. Generated with Codex assistance and checked through PHPUnit."
+  },
+  {
+    "id": "DEF-02",
+    "title": "SQE DEF-02 — Unsupported invoice currency fails in money formatting",
+    "body": "Severity: Major\nPriority: P1\nRisk: R6, error handling\nTriage: Locally fixed and verified with the generated API partition. Awaiting integration into the assessment branch.\n\nSubmit the seeded synthetic invoice with an unsupported currency code. The initial generated case returned 500. The expected result is 422 with a currency_code error and no created invoice.\n\nThe money middleware resolved a currency symbol before request validation. The local guard lets validation handle unsupported codes without invoking currency formatting. Generated with Codex assistance and checked through the generated PHPUnit API tests."
+  },
+  {
+    "id": "DEF-03",
+    "title": "SQE DEF-03 — Unparseable invoice and payment dates return HTTP 500",
+    "body": "Severity: Major\nPriority: P2\nRisk: R6, error handling\nTriage: Open. Prioritize after the payment balance and currency fixes.\n\nThe generated input partitions include unparseable dates for invoice issue/due dates and payment date. Each currently returns 500. A field-level validation response would let the caller identify and correct the input. Rejections must preserve existing invoice and transaction state.\n\nThe request date middleware attempts parsing before FormRequest validation. Add a predictable rejection path for unparseable dates, verify the field error and test the valid-date boundary cases for regression. Generated with Codex assistance and observed through the synthetic API suite."
+  }
+]
