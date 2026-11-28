@@ -3,6 +3,8 @@ name: SQE payment regression proof
 on:
   pull_request:
     branches: [sqe-proof-base]
+  push:
+    branches: [sqe-proof-overpayment-before, sqe-proof-overpayment-fix]
 
 permissions:
   contents: read

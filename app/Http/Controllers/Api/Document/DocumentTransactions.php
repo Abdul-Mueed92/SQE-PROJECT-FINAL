@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Document;
 
 use App\Abstracts\Http\ApiController;
+use App\Exceptions\Job\PaymentExceedsBalance;
 use App\Http\Requests\Banking\Transaction as Request;
 use App\Http\Resources\Banking\Transaction as Resource;
 use App\Jobs\Banking\CreateBankingDocumentTransaction;
@@ -10,6 +11,7 @@ use App\Jobs\Banking\UpdateBankingDocumentTransaction;
 use App\Jobs\Banking\DeleteTransaction;
 use App\Models\Banking\Transaction;
 use App\Models\Document\Document;
+use Illuminate\Validation\ValidationException;
 
 class DocumentTransactions extends ApiController
 {
@@ -71,7 +73,11 @@ class DocumentTransactions extends ApiController
             return $this->errorInternal('No query results for model [' . Document::class . '] ' . $document_id);
         }
 
-        $transaction = $this->dispatch(new CreateBankingDocumentTransaction($document, $request));
+        try {
+            $transaction = $this->dispatch(new CreateBankingDocumentTransaction($document, $request));
+        } catch (PaymentExceedsBalance $exception) {
+            throw ValidationException::withMessages(['amount' => $exception->getMessage()]);
+        }
 
         return $this->created(route('api.documents.transactions.show', [$document_id, $transaction->id]), new Resource($transaction));
     }

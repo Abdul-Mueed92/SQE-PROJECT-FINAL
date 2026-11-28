@@ -5,6 +5,7 @@ namespace App\Jobs\Banking;
 use App\Abstracts\Job;
 use App\Events\Banking\DocumentTransactionCreated;
 use App\Events\Banking\DocumentTransactionCreating;
+use App\Exceptions\Job\PaymentExceedsBalance;
 use App\Jobs\Banking\CreateTransaction;
 use App\Jobs\Document\CreateDocumentHistory;
 use App\Events\Document\PaidAmountCalculated;
@@ -114,7 +115,7 @@ class CreateBankingDocumentTransaction extends Job implements ShouldCreate
 
             $message = trans('messages.error.over_payment', ['amount' => money($error_amount, $code)]);
 
-            throw new \Exception($message);
+            throw new PaymentExceedsBalance($message);
         } else {
             $this->model->status = ($compare === 0) ? 'paid' : 'partial';
         }
