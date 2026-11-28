@@ -73,12 +73,60 @@ jobs:
             --test-framework-options='--filter=InvoicePayment(Limit|Preparation)Test --do-not-cache-result' \
             --filter=CreateBankingDocumentTransaction.php --no-progress --threads=2 --min-covered-msi=75
       - name: Enforce Sonar quality gate
-        uses: SonarSource/sonarqube-scan-action@v6
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        with:
-          args: -Dsonar.qualitygate.wait=true
+        shell: bash
+        run: |
+          mkdir -p sqe/evidence/static
+          sonar_url=http://127.0.0.1:9000
+          docker run --detach --name sqe-sonarqube \
+            --publish 127.0.0.1:9000:9000 \
+            --env SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true \
+            sonarqube:lts-community
+          docker image inspect sonarqube:lts-community \
+            --format '{{json .RepoDigests}}' > sqe/evidence/static/sonar-image.json
+
+          for ((attempt=1; attempt<=60; attempt++)); do
+            if curl -fsS "$sonar_url/api/system/status" \
+              | jq -e '.status == "UP"' >/dev/null; then
+              break
+            fi
+            sleep 5
+          done
+          curl -fsS "$sonar_url/api/system/status" \
+            | tee sqe/evidence/static/sonar-system.json \
+            | jq -e '.status == "UP"' >/dev/null
+
+          sonar_password="$(openssl rand -hex 24)"
+          echo "::add-mask::$sonar_password"
+          curl -fsS -u admin:admin -X POST \
+            --data-urlencode login=admin \
+            --data-urlencode previousPassword=admin \
+            --data-urlencode "password=$sonar_password" \
+            "$sonar_url/api/users/change_password"
+          SONAR_TOKEN="$(curl -fsS -u "admin:$sonar_password" -X POST \
+            --data-urlencode name=sqe-ci \
+            "$sonar_url/api/user_tokens/generate" | jq -er '.token')"
+          echo "::add-mask::$SONAR_TOKEN"
+          export SONAR_TOKEN
+          export SONAR_HOST_URL="$sonar_url"
+
+          docker run --rm --network host \
+            --user "$(id -u):$(id -g)" --env SONAR_USER_HOME=/tmp/sonar \
+            --env SONAR_TOKEN --env SONAR_HOST_URL \
+            --volume "$PWD:$PWD" --workdir "$PWD" \
+            sonarsource/sonar-scanner-cli \
+            -Dsonar.qualitygate.wait=true \
+            -Dsonar.qualitygate.timeout=900 \
+            | tee sqe/evidence/static/sonar-scanner.log
+
+          curl -fsS -u "$SONAR_TOKEN:" \
+            "$sonar_url/api/qualitygates/project_status?projectKey=akaunting-sqe" \
+            | tee sqe/evidence/static/sonar-quality-gate.json \
+            | jq -e '.projectStatus.status == "OK"' >/dev/null
+
+          curl -fsS -u "$SONAR_TOKEN:" \
+            "$sonar_url/api/measures/component?component=akaunting-sqe&metricKeys=duplicated_lines_density" \
+            | tee sqe/evidence/static/sonar-duplication.json \
+            | jq -e '[.component.measures[] | select(.metric == "duplicated_lines_density") | (.value | tonumber)] | length == 1 and .[0] <= 13'
       - name: Preserve CI evidence
         uses: actions/upload-artifact@v4
         if: always()
